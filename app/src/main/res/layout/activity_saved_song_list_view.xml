@@ -16,7 +16,7 @@
         android:layout_height="wrap_content"
         android:text="Select which song's subtitles you want to see"
         android:textSize="18sp"
-        android:marginBottom="16dp" />
+        android:layout_marginBottom="16dp" />
 
     <ListView
         android:id="@+id/songListView"

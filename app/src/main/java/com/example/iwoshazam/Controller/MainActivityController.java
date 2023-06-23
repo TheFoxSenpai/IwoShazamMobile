@@ -19,6 +19,7 @@ import androidx.core.content.ContextCompat;
 import com.example.iwoshazam.R;
 import com.skyfishjy.library.RippleBackground;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -43,6 +44,17 @@ public class MainActivityController extends AppCompatActivity {
     private Thread recordingThread = null;
     private boolean isRecording = false;
     private int bufferSize = 0;
+
+    private void deleteAudioFile() {
+        File file = new File(filename);
+        if (file.exists()) {
+            if(file.delete()){
+                Log.d(LOG_TAG, "File Deleted: " + filename);
+            } else {
+                Log.d(LOG_TAG, "File Not Deleted: " + filename);
+            }
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,6 +133,7 @@ public class MainActivityController extends AppCompatActivity {
 
         isRecording = true;
         recordingThread = new Thread(new Runnable() {
+            @Override
             public void run() {
                 writeAudioDataToFile();
 
@@ -142,6 +155,9 @@ public class MainActivityController extends AppCompatActivity {
                     RecognizedSongModel recognizedSong = new RecognizedSongModel();
                     recognizedSong.setTitle(songTitle);
                     recognizedSong.setArtist(songArtist);
+
+                    // Delete the audio file
+                    deleteAudioFile();
 
                     // Navigate to the RecognizedSongActivity
                     Intent intent = new Intent(MainActivityController.this, RecognizedSongActivityController.class);
