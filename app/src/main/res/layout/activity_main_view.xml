@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.skyfishjy.library.RippleBackground xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:rb_color="#0099CC"
+    app:rb_radius="32dp"
+    app:rb_rippleAmount="4"
+    app:rb_duration="3000"
+    app:rb_scale="6">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <Button
+            android:id="@+id/btnFindSong"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="Find Song"
+            android:textSize="24sp" />
+
+    </RelativeLayout>
+
+</com.skyfishjy.library.RippleBackground>
