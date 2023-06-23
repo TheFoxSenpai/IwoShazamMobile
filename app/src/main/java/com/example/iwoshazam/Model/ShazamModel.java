@@ -1,0 +1,57 @@
+package com.example.iwoshazam.Model;
+
+import android.util.Base64;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+
+public class ShazamModel {
+
+    private final String API_KEY = "14efb9e98fmshd3eb533e851e428p1ffa3ajsne9f076e28c97";
+
+    public String recognizeSong(String songPath) throws IOException {
+        File songFile = new File(songPath);
+        byte[] songData = new byte[(int) songFile.length()];
+        FileInputStream fis = new FileInputStream(songFile);
+        fis.read(songData);
+        fis.close();
+
+        String base64Data = Base64.encodeToString(songData, Base64.DEFAULT);
+
+        OkHttpClient client = new OkHttpClient();
+
+        RequestBody requestBody = RequestBody.create(MediaType.parse("text/plain"), base64Data);
+        Request request = new Request.Builder()
+                .url("https://shazam.p.rapidapi.com/songs/detect")
+                .header("x-rapidapi-key", API_KEY)
+                .header("x-rapidapi-host", "shazam.p.rapidapi.com")
+                .header("Content-Type", "text/plain")
+                .post(requestBody)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            int statusCode = response.code();
+            String responseBody = response.body().string();
+
+            System.out.println("Status code: " + statusCode);
+            System.out.println("Response body: " + responseBody);
+
+            switch (statusCode) {
+                case 200:
+                    return responseBody;
+                case 204:
+                    throw new RuntimeException("The song could not be recognized.");
+                case 413:
+                    throw new RuntimeException("The provided file is too long.");
+                default:
+                    throw new RuntimeException("Failed to recognize song. Status code: " + statusCode);
+            }
+        }
+    }
+}

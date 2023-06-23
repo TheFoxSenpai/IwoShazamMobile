@@ -19,20 +19,25 @@ import androidx.core.content.ContextCompat;
 import com.example.iwoshazam.R;
 import com.skyfishjy.library.RippleBackground;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.UUID;
 
+import com.example.iwoshazam.Model.RecognizedSongModel;
+import com.example.iwoshazam.Model.ShazamModel;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 public class MainActivityController extends AppCompatActivity {
     private static final int PERMISSIONS_REQUEST = 1;
     private static final String LOG_TAG = "AudioRecordTest";
     private RippleBackground rippleBackground;
-
+    private ShazamModel shazamModel;
     private static final int SAMPLE_RATE = 44100;
     private static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO;
     private static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
+    private String filename;
 
     private AudioRecord recorder = null;
     private Thread recordingThread = null;
@@ -43,6 +48,8 @@ public class MainActivityController extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_view);
+
+        shazamModel = new ShazamModel();
 
         rippleBackground = findViewById(R.id.content);
 
@@ -116,6 +123,33 @@ public class MainActivityController extends AppCompatActivity {
         recordingThread = new Thread(new Runnable() {
             public void run() {
                 writeAudioDataToFile();
+
+                // Recognize the song
+                try {
+                    String songInfoJson = shazamModel.recognizeSong(filename);
+
+                    // Parse the JSON response
+                    JsonParser parser = new JsonParser();
+                    JsonObject json = (JsonObject) parser.parse(songInfoJson);
+
+                    // Extract song title and artist from the JSON response
+                    JsonObject track = json.getAsJsonObject("track");
+                    String songTitle = track.get("title").getAsString();
+                    String songArtist = track.get("subtitle").getAsString();
+                    String imageURL = track.get("images").getAsJsonObject().get("coverart").getAsString();
+
+                    // Create the RecognizedSong object
+                    RecognizedSongModel recognizedSong = new RecognizedSongModel();
+                    recognizedSong.setTitle(songTitle);
+                    recognizedSong.setArtist(songArtist);
+
+                    // Navigate to the RecognizedSongActivity
+                    Intent intent = new Intent(MainActivityController.this, RecognizedSongActivityController.class);
+                    intent.putExtra("recognizedSong", recognizedSong);
+                    startActivity(intent);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }, "AudioRecorder Thread");
         recordingThread.start();
@@ -123,7 +157,7 @@ public class MainActivityController extends AppCompatActivity {
 
     private void writeAudioDataToFile() {
         byte data[] = new byte[bufferSize];
-        String filename = getExternalCacheDir().getAbsolutePath() + "/" + UUID.randomUUID().toString() + "audio.raw";
+        filename = getExternalCacheDir().getAbsolutePath() + "/" + UUID.randomUUID().toString() + "audio.raw";
         FileOutputStream os = null;
 
         try {
