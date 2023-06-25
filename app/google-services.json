@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "991205697969",
+    "project_id": "iwoshazam",
+    "storage_bucket": "iwoshazam.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:991205697969:android:cd90b88ae22bc0d575b590",
+        "android_client_info": {
+          "package_name": "com.example.iwoshazam"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "991205697969-gebhqgbldhu4sorst0rvtukrblvv4a34.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDvtWHSdjDGfGQbeoWNJz3oJwnlhx2WSYs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "991205697969-gebhqgbldhu4sorst0rvtukrblvv4a34.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

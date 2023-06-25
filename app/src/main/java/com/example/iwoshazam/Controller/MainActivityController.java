@@ -1,6 +1,10 @@
 package com.example.iwoshazam.Controller;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioFormat;
@@ -13,7 +17,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -45,14 +53,16 @@ public class MainActivityController extends AppCompatActivity {
     private ShazamModel shazamModel;
     private static final int SAMPLE_RATE = 44100;
     private static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO;
-
     private static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
     private String filename;
 
+    private ImageView logoImage;
     private AudioRecord recorder = null;
     private Thread recordingThread = null;
     private boolean isRecording = false;
     private int bufferSize = 0;
+    private AnimatorSet scaleUp = null;
+    private AnimatorSet scaleDown = null;
     public static void debugLongLog(String response){
         if(response.length() > 4000) {
             Log.d(LOG_TAG, "sb.length = " + response.length());
@@ -70,7 +80,6 @@ public class MainActivityController extends AppCompatActivity {
         }
     }
     private class RecognizeSongTask extends AsyncTask<String, Void, String> {
-
 
         @Override
         protected String doInBackground(String... params) {
@@ -156,6 +165,8 @@ public class MainActivityController extends AppCompatActivity {
         new RecognizeSongTask().execute(rawFilePath);
     }
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -164,8 +175,16 @@ public class MainActivityController extends AppCompatActivity {
         shazamModel = new ShazamModel();
 
         rippleBackground = findViewById(R.id.content);
+        logoImage = findViewById(R.id.image_logo);
+        Button arrowButton = findViewById(R.id.arrowButton);
+        arrowButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivityController.this, SavedSongListActivityController.class);
+                startActivity(intent);
+            }
+        });
 
-        // Check permissions
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED
                 || ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
                 || ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
@@ -176,32 +195,32 @@ public class MainActivityController extends AppCompatActivity {
             }, PERMISSIONS_REQUEST);
         }
 
-        // Initialize button and set click listener
-        Button findSongButton = findViewById(R.id.btnFindSong);
+
+        FrameLayout findSongButton = findViewById(R.id.btnFindSong);
+
+
+        logoImage = findViewById(R.id.image_logo);
 
         findSongButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Log.d(LOG_TAG, "Button clicked, starting process...");
-                // Start ripple animation
                 rippleBackground.startRippleAnimation();
+                findSongButton.setBackground(null);
+                animateLogo();
 
-                // Start recording
                 startRecording();
 
-                // Stop recording after 6 seconds
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
 
                         stopRecording();
-
-                        // Stop ripple animation
                         rippleBackground.stopRippleAnimation();
+                        logoImage.clearAnimation();
                     }
                 }, 6000);
 
-                // Start song recognition after a delay
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -223,6 +242,41 @@ public class MainActivityController extends AppCompatActivity {
                 }, 6500);
             }
         });
+    }
+    private void animateLogo() {
+        ObjectAnimator scaleDownX = ObjectAnimator.ofFloat(logoImage, "scaleX", 0.69f);
+        ObjectAnimator scaleDownY = ObjectAnimator.ofFloat(logoImage, "scaleY", 0.69f);
+        scaleDownX.setDuration(1000);
+        scaleDownY.setDuration(1000);
+
+        ObjectAnimator scaleUpX = ObjectAnimator.ofFloat(logoImage, "scaleX", 1.1f);
+        ObjectAnimator scaleUpY = ObjectAnimator.ofFloat(logoImage, "scaleY", 1.1f);
+        scaleUpX.setDuration(1000);
+        scaleUpY.setDuration(1000);
+
+        scaleDown = new AnimatorSet();
+        scaleDown.play(scaleDownX).with(scaleDownY);
+
+        scaleUp = new AnimatorSet();
+        scaleUp.play(scaleUpX).with(scaleUpY);
+
+        scaleDown.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                if (isRecording) scaleUp.start();
+            }
+        });
+
+        scaleUp.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                if (isRecording) scaleDown.start();
+            }
+        });
+
+        scaleDown.start();
     }
 
     private void startRecording() {
@@ -286,12 +340,15 @@ public class MainActivityController extends AppCompatActivity {
     private void stopRecording() {
         if (null != recorder) {
             isRecording = false;
-
+            FrameLayout findSongButton = findViewById(R.id.btnFindSong);
+            findSongButton.clearAnimation();
             recorder.stop();
             recorder.release();
 
             recorder = null;
             recordingThread = null;
+            if(scaleUp.isRunning()) scaleUp.cancel();
+            if(scaleDown.isRunning()) scaleDown.cancel();
         }
     }
 }

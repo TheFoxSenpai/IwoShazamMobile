@@ -30,6 +30,9 @@
         <activity android:name=".Controller.SavedSongListActivityController" />
         <activity android:name=".Controller.RecognizedSongActivityController" />
         <activity android:name=".Controller.LyricsActivityController" />
+        <activity android:name=".Controller.Lyrics2ActivityController"/>
+
+
 
     </application>
 

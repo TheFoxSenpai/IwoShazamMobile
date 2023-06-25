@@ -58,6 +58,7 @@ public class RecognizedSongActivityController extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(RecognizedSongActivityController.this, LyricsActivityController.class);
+                intent.putExtra("songName", recognizedSong.getTitle()); // Pass the song name as an extra
                 intent.putExtra("lyrics", recognizedSong.getLyrics());
                 startActivity(intent);
             }
