@@ -6,7 +6,7 @@ import java.io.Serializable;
 public class RecognizedSongModel implements Serializable {
     private String title;
     private String artist;
-    private Bitmap coverArt;
+    private String coverArt;
     private String youtubeUrl;
 
     // Getter and Setter for Title
@@ -28,11 +28,11 @@ public class RecognizedSongModel implements Serializable {
     }
 
     // Getter and Setter for Cover Art
-    public Bitmap getCoverArt() {
+    public String getCoverArt() {
         return coverArt;
     }
 
-    public void setCoverArt(Bitmap coverArt) {
+    public void setCoverArt(String coverArt) {
         this.coverArt = coverArt;
     }
 

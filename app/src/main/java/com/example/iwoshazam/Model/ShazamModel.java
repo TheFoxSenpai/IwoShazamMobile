@@ -17,12 +17,23 @@ public class ShazamModel {
 
     public String recognizeSong(String songPath) throws IOException {
         File songFile = new File(songPath);
-        byte[] songData = new byte[(int) songFile.length()];
-        FileInputStream fis = new FileInputStream(songFile);
-        fis.read(songData);
-        fis.close();
+        byte[] songData;
 
-        String base64Data = Base64.encodeToString(songData, Base64.DEFAULT);
+        try (FileInputStream fis = new FileInputStream(songFile)) {
+            songData = new byte[(int) songFile.length()];
+            int offset = 0;
+            int numRead;
+
+            while (offset < songData.length && (numRead = fis.read(songData, offset, songData.length - offset)) >= 0) {
+                offset += numRead;
+            }
+
+            if (offset < songData.length) {
+                throw new IOException("Failed to fully read file " + songFile.getName());
+            }
+        }
+
+        String base64Data = Base64.encodeToString(songData, Base64.NO_WRAP);
 
         OkHttpClient client = new OkHttpClient();
 
