@@ -20,6 +20,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.example.iwoshazam.R;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.skyfishjy.library.RippleBackground;
 
 import java.io.DataInputStream;
@@ -51,25 +53,23 @@ public class MainActivityController extends AppCompatActivity {
     private Thread recordingThread = null;
     private boolean isRecording = false;
     private int bufferSize = 0;
-    private void writeInt(final DataOutputStream output, final int value) throws IOException {
-        output.write((byte) (value >> 0));
-        output.write((byte) (value >> 8));
-        output.write((byte) (value >> 16));
-        output.write((byte) (value >> 24));
-    }
-
-    private void writeShort(final DataOutputStream output, final short value) throws IOException {
-        output.write((byte) (value >> 0));
-        output.write((byte) (value >> 8));
-    }
-
-    private void writeString(final DataOutputStream output, final String value) throws IOException {
-        for (int i = 0; i < value.length(); i++) {
-            output.write(value.charAt(i));
+    public static void debugLongLog(String response){
+        if(response.length() > 4000) {
+            Log.d(LOG_TAG, "sb.length = " + response.length());
+            int chunkCount = response.length() / 4000;     // integer division
+            for (int i = 0; i <= chunkCount; i++) {
+                int max = 4000 * (i + 1);
+                if(max >= response.length()) {
+                    Log.d(LOG_TAG, "chunk " + i + " of " + chunkCount + ":" + response.substring(4000 * i));
+                } else {
+                    Log.d(LOG_TAG, "chunk " + i + " of " + chunkCount + ":" + response.substring(4000 * i, max));
+                }
+            }
+        } else {
+            Log.d(LOG_TAG, response.toString());
         }
     }
     private class RecognizeSongTask extends AsyncTask<String, Void, String> {
-
 
 
         @Override
@@ -86,11 +86,14 @@ public class MainActivityController extends AppCompatActivity {
         @Override
         protected void onPostExecute(String songInfoJson) {
             if (songInfoJson != null) {
+                // Needed add this cuz JSON is to long for debbug
+                debugLongLog(songInfoJson);
+
                 // Parse the JSON response
                 JsonParser parser = new JsonParser();
                 JsonObject json = (JsonObject) parser.parse(songInfoJson);
 
-                // Extract song title and artist from the JSON response
+                // Extract info from the JSON response
                 JsonObject track = json.getAsJsonObject("track");
                 String songTitle = track.get("title").getAsString();
                 String songArtist = track.get("subtitle").getAsString();
@@ -102,12 +105,31 @@ public class MainActivityController extends AppCompatActivity {
                     System.out.println("No Youtube URL found");
                 }
 
+                String songLyrics = "";
+                JsonArray sectionsArray = track.getAsJsonArray("sections");
+                if (sectionsArray != null) {
+                    Log.d(LOG_TAG, "Section array size: " + sectionsArray.size());
+                    for (JsonElement sectionElement : sectionsArray) {
+                        JsonObject sectionObject = sectionElement.getAsJsonObject();
+                        if (sectionObject.get("type").getAsString().equals("LYRICS")) {
+                            JsonArray lyricsArray = sectionObject.getAsJsonArray("text");
+                            Log.d(LOG_TAG, "Lyrics array size: " + lyricsArray.size());
+                            for (JsonElement lyricElement : lyricsArray) {
+                                String lyric = lyricElement.getAsString();
+                                Log.d(LOG_TAG, "Lyric: " + lyric);
+                                songLyrics += lyric + "\n";
+                            }
+                        }
+                    }
+                }
+                Log.d(LOG_TAG, "Song lyrics: " + songLyrics);
                 // Create the RecognizedSong object
                 RecognizedSongModel recognizedSong = new RecognizedSongModel();
                 recognizedSong.setTitle(songTitle);
                 recognizedSong.setArtist(songArtist);
                 recognizedSong.setCoverArt(imageURL);
                 recognizedSong.setYoutubeUrl(youtubeURL);
+                recognizedSong.setLyrics(songLyrics);
 
                 // Navigate to the RecognizedSongActivity
                 Intent intent = new Intent(MainActivityController.this, RecognizedSongActivityController.class);
@@ -116,55 +138,7 @@ public class MainActivityController extends AppCompatActivity {
             }
         }
     }
-    private String convertToRaw(String audioFilePath) throws IOException {
-        String rawFilePath = audioFilePath.replace(".wav", ".raw");
 
-        File inputFile = new File(audioFilePath);
-        File outputFile = new File(rawFilePath);
-
-        // Set up the input and output streams
-        FileInputStream inputStream = new FileInputStream(inputFile);
-        FileOutputStream outputStream = new FileOutputStream(outputFile);
-
-        // Set the audio parameters
-        int sampleRate = 44100;
-        int channelConfig = AudioFormat.CHANNEL_OUT_MONO;
-        int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
-        int bufferSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormat);
-
-        // Set up the AudioTrack for playback
-        AudioTrack audioTrack = new AudioTrack(
-                AudioManager.STREAM_MUSIC,
-                sampleRate,
-                channelConfig,
-                audioFormat,
-                bufferSize,
-                AudioTrack.MODE_STREAM
-        );
-
-        // Create a buffer to read audio data from the input stream
-        byte[] buffer = new byte[bufferSize];
-
-        // Start the audio playback
-        audioTrack.play();
-
-        // Read audio data from the input stream and write it to the output stream
-        int bytesRead;
-        while ((bytesRead = inputStream.read(buffer)) != -1) {
-            audioTrack.write(buffer, 0, bytesRead);
-            outputStream.write(buffer, 0, bytesRead);
-        }
-
-        // Stop the audio playback and release resources
-        audioTrack.stop();
-        audioTrack.release();
-
-        // Close the input and output streams
-        inputStream.close();
-        outputStream.close();
-
-        return rawFilePath;
-    }
 
     private void recognizeSong() throws IOException {
         // No need to convert to raw, since the initial audio file is already in raw format
@@ -277,8 +251,6 @@ public class MainActivityController extends AppCompatActivity {
     private void writeAudioDataToFile() {
         byte data[] = new byte[bufferSize];
         filename = getExternalFilesDir(null).getAbsolutePath() + "/" + UUID.randomUUID().toString() + "_audio.raw";
-        String tempFilename = getExternalFilesDir(null).getAbsolutePath() + "/" + UUID.randomUUID().toString() + "_temp.raw";
-
 
         FileOutputStream os = null;
 
@@ -306,52 +278,10 @@ public class MainActivityController extends AppCompatActivity {
             } catch (IOException e) {
                 Log.e(LOG_TAG, "Error closing file ", e);
             }
-            // At this point, tempFilename contains raw PCM data.
-            // Now we'll convert it to WAV format and save as filename
-            try {
-                rawToWave(new File(tempFilename), new File(filename));
-            } catch (IOException e) {
-                Log.e(LOG_TAG, "Error converting to WAV ", e);
-            }
         }
     }
 
-    private void rawToWave(final File rawFile, final File waveFile) throws IOException {
-        byte[] rawData = new byte[(int) rawFile.length()];
-        DataInputStream input = null;
-        try {
-            input = new DataInputStream(new FileInputStream(rawFile));
-            input.read(rawData);
-        } finally {
-            if (input != null) {
-                input.close();
-            }
-        }
-        DataOutputStream output = null;
-        try {
-            output = new DataOutputStream(new FileOutputStream(waveFile));
-            // WAVE header
-            // see http://ccrma.stanford.edu/courses/422/projects/WaveFormat/
-            writeString(output, "RIFF"); // chunk id
-            writeInt(output, 36 + rawData.length); // chunk size
-            writeString(output, "WAVE"); // format
-            writeString(output, "fmt "); // subchunk 1 id
-            writeInt(output, 16); // subchunk 1 size
-            writeShort(output, (short) 1); // audio format (1 = PCM)
-            writeShort(output, (short) 1); // number of channels
-            writeInt(output, SAMPLE_RATE); // sample rate
-            writeInt(output, SAMPLE_RATE * 2); // byte rate
-            writeShort(output, (short) 2); // block align
-            writeShort(output, (short) 16); // bits per sample
-            writeString(output, "data"); // subchunk 2 id
-            writeInt(output, rawData.length); // subchunk 2 size
-            output.write(rawData); // audio data
-        } finally {
-            if (output != null) {
-                output.close();
-            }
-        }
-    }
+
 
     private void stopRecording() {
         if (null != recorder) {

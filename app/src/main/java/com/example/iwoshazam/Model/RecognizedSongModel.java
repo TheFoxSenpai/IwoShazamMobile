@@ -7,6 +7,8 @@ public class RecognizedSongModel implements Serializable {
     private String title;
     private String artist;
     private String coverArt;
+
+    private String lyrics;
     private String youtubeUrl;
 
     // Getter and Setter for Title
@@ -43,5 +45,11 @@ public class RecognizedSongModel implements Serializable {
 
     public void setYoutubeUrl(String youtubeUrl) {
         this.youtubeUrl = youtubeUrl;
+    }
+    public String getLyrics() {
+        return lyrics;
+    }
+    public void setLyrics(String lyrics) {
+        this.lyrics = lyrics;
     }
 }

@@ -28,25 +28,18 @@
 
     <ImageView
         android:id="@+id/iconImageView"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
         android:scaleType="centerInside"
         android:layout_marginTop="20dp"/>
 
 
-
     <Button
-        android:id="@+id/saveButton"
+        android:id="@+id/showButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Save Lyrics"
-        android:layout_marginTop="20dp"/>
+        android:layout_marginTop="20dp"
+        android:text="Show Lyrics" />
 
-    <Button
-        android:id="@+id/skipButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Skip"
-        android:layout_marginTop="10dp"/>
 
 </LinearLayout>

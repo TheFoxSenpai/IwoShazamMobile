@@ -53,21 +53,16 @@ public class RecognizedSongActivityController extends AppCompatActivity {
             }
         });
 
-        Button saveButton = findViewById(R.id.saveButton);
+        Button saveButton = findViewById(R.id.showButton);
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Handle save button click
+                Intent intent = new Intent(RecognizedSongActivityController.this, LyricsActivityController.class);
+                intent.putExtra("lyrics", recognizedSong.getLyrics());
+                startActivity(intent);
             }
         });
 
 
-        Button skipButton = findViewById(R.id.skipButton);
-        skipButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Handle skip button click
-            }
-        });
     }
 }
