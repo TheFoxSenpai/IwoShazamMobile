@@ -12,8 +12,8 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class ShazamModel {
-
-    private final String API_KEY = "14efb9e98fmshd3eb533e851e428p1ffa3ajsne9f076e28c97";
+//add here you api key https://rapidapi.com/apidojo/api/shazam
+    private final String API_KEY = "";
 
     public String recognizeSong(String songPath) throws IOException {
         File songFile = new File(songPath);
