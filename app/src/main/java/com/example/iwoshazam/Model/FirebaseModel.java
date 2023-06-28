@@ -23,7 +23,7 @@ public class FirebaseModel {
 
     public FirebaseModel() {
         // Get a reference to the Firebase Realtime Database
-        database = FirebaseDatabase.getInstance("https://iwoshazam-default-rtdb.europe-west1.firebasedatabase.app").getReference();
+        database = FirebaseDatabase.getInstance("").getReference();
     }
 
     public static String sanitizePath(String path) {
